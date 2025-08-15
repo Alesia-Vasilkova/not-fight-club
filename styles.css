@@ -1,118 +1,130 @@
 body {
-    margin: 0 auto;
+  margin: 0 auto;
 }
 section {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 .header-container {
-    border-bottom: 3px solid black;
-    display: flex;
-    justify-content: space-between;
-    justify-items: center;
-    padding-top: 10px;
+  border-bottom: 3px solid black;
+  display: flex;
+  justify-content: space-between;
+  justify-items: center;
+  padding-top: 10px;
 }
-.header-icons img{
-    width: 25px;
+.header-icons img {
+  width: 25px;
 }
 .title-pg {
-    padding-left: 10px;
+  padding-left: 10px;
 }
-.sign-up  {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh; 
-    margin: 0; 
+.sign-up {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
 }
 .first-button button {
-    border: 1px solid #000;
-    border-radius: .3rem;
-    cursor: pointer;
-    display: flex;
-    font-size: 1.2rem;
-    justify-content: center;
-    padding: 0.4rem 1.4rem;
+  border: 1px solid #000;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.2rem;
+  justify-content: center;
+  padding: 0.4rem 1.4rem;
 }
 .char-inp {
-    padding: 5px 0 25px 0;
+  padding: 5px 0 25px 0;
 }
-.char-inp input{
-    border: 1px solid #00bfff;
-    border-radius: .3rem;
-    cursor: pointer;
-    display: flex;
-    font-size: 1rem;
-    justify-content: center;
-    padding: 0.4rem 4rem;
+.char-inp input {
+  border: 1px solid #00bfff;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  font-size: 1rem;
+  justify-content: center;
+  padding: 0.4rem 4rem;
 }
 .modal {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 150px;
-    display: flex;
-    justify-content: center;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 150px;
+  display: flex;
+  justify-content: center;
 }
 .modal-content {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 .imgs-char {
-    width: 50vw;
-    height: 34vh;
-    background-color: rgb(185, 194, 191);
-    margin: 0 auto;
-    border-radius: 1rem;
-    display: flex;
-    justify-content: space-between;
+  width: 65vw;
+  height: 34vh;
+  background-color: rgb(185, 194, 191);
+  margin: 0 auto;
+  border-radius: 1rem;
+  display: flex;
+  justify-content: space-between;
 }
-.imgs-char img, .img-char img{
-    width: 200px;
-    height: 200px;
+.imgs-char img,
+.img-char img {
+  width: 200px;
+  height: 200px;
+}
+.imgs-char img {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+}
+.imgs-char img.selected {
+    border-color: rgb(55, 54, 48);
+  box-shadow: 0 0 10px rgb(55, 54, 48);
 }
 .modalscreen {
-    position: absolute;
-    top: 230px;
-    left: 10px;
+  position: absolute;
+  top: 230px;
+  left: 10px;
 }
-.modalscreen, .modalscreen img {
-    width: 50px;
-    height: 50px;
-    border-radius: 9rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
+.modalscreen,
+.modalscreen img {
+  width: 50px;
+  height: 50px;
+  border-radius: 9rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
 }
-.closeModalbtn, .closeModalbtn img {
-    width: 25px;
-    height: 25px;
-    position: absolute;
-    border-radius: 3rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
+.closeModalbtn,
+.closeModalbtn img {
+  width: 25px;
+  height: 25px;
+  position: absolute;
+  border-radius: 3rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
 }
 .img-char {
-    display: flex;
+  display: flex;
 }
 .fight {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
 }
 .fight-btn {
-    border: 1px solid #000;
-    border-radius: .3rem;
-    cursor: pointer;
-    display: flex;
-    font-size: 1.2rem;
-    justify-content: center;
-    padding: 0.4rem 1.4rem;
+  border: 1px solid #000;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.2rem;
+  justify-content: center;
+  padding: 0.4rem 1.4rem;
 }
 .hide {
-    display: none;
+  display: none;
 }

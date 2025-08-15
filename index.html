@@ -53,12 +53,14 @@
         const closeModal = document.querySelector(".modal");
         closeModal.classList.add("hide");
       }
-      function displayName(){
+      function displayName() {
         const outPutName = localStorage.getItem("userSettings");
         const parseSettingsName = JSON.parse(outPutName);
         const savedName = parseSettingsName.name;
         const outPutSect = document.getElementById("userName");
-        outPutSect.textContent = savedName ? "Player Name: " + savedName : "Something went wrong";
+        outPutSect.textContent = savedName
+          ? "Player Name: " + savedName
+          : "Something went wrong";
       }
     </script>
   </head>
@@ -129,13 +131,21 @@
         <div class="modal-content">
           <div class="imgs-char">
             <img
+              src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
+              id="1"
+              class="selected"
+            />
+            <img
               src="assets/characters/vecteezy_adorable-video-game-character-for-t-shirt-artwork_27294891.png"
+              id="2"
             />
             <img
               src="assets/characters/vecteezy_cute-game-character-for-t-shirt-design-generative-ai_27294914.png"
+              id="3"
             />
             <img
               src="assets/characters/vecteezy_engaging-video-game-character-for-t-shirt-design-generative-ai_27294892.png"
+              id="4"
             />
           </div>
           <button class="closeModalbtn" onclick="closeProfileImages()">
@@ -178,8 +188,7 @@
           </button>
         </div>
         <div class="charInf">
-            <span id="userName">
-            </span>
+          <span id="userName"> </span>
         </div>
       </div>
     </section>
@@ -214,6 +223,18 @@
 
       const nextPage = document.querySelector("#sign-up");
       nextPage.classList.remove("hide");
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const mainImg = document.querySelector(".main-img-char img");
+        document.querySelectorAll(".imgs-char img").forEach(img => {
+          img.addEventListener("click", () => {
+            document.querySelectorAll(".imgs-char img")
+            .forEach(i => i.classList.remove("selected"));
+            img.classList.add("selected");
+            mainImg.src = img.src;
+          });
+        });
+      });
     </script>
   </body>
 </html>
