@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="styles.css" />
     <title>Not Fight Club</title>
     <script>
+      function setItem(obj) {
+        const prev = JSON.parse(localStorage.getItem("userSettings") || "{}");
+        localStorage.setItem(
+          "userSettings",
+          JSON.stringify({ ...prev, ...obj })
+        );
+      }
+      function getItem(key) {
+        const outPut = localStorage.getItem("userSettings");
+        const parseSettings = JSON.parse(outPut);
+        const savedInfo = parseSettings[key];
+        return savedInfo;
+      }
       function hidePages() {
         const pages = document.querySelectorAll(".page");
         pages.forEach((page) => {
@@ -19,7 +32,7 @@
         if (val === "") {
           return;
         }
-        localStorage.setItem("userSettings", JSON.stringify({ name: val }));
+        setItem({ name: val });
         hidePages();
         const nextPage = document.querySelector(".main-home");
         nextPage.classList.remove("hide");
@@ -54,13 +67,23 @@
         closeModal.classList.add("hide");
       }
       function displayName() {
-        const outPutName = localStorage.getItem("userSettings");
-        const parseSettingsName = JSON.parse(outPutName);
-        const savedName = parseSettingsName.name;
+        const savedName = getItem("name");
         const outPutSect = document.getElementById("userName");
         outPutSect.textContent = savedName
           ? "Player Name: " + savedName
           : "Something went wrong";
+      }
+
+      function selectImg(index) {
+        const mainImg = document.querySelector(".main-img-char img");
+        document.querySelectorAll(".imgs-char img").forEach((img, i) => {
+          img.classList.remove("selected");
+          if (index === i) {
+            img.classList.add("selected");
+            mainImg.src = img.src;
+            setItem({ img: index });
+          }
+        });
       }
     </script>
   </head>
@@ -225,15 +248,13 @@
       nextPage.classList.remove("hide");
 
       document.addEventListener("DOMContentLoaded", () => {
-        const mainImg = document.querySelector(".main-img-char img");
-        document.querySelectorAll(".imgs-char img").forEach(img => {
+        document.querySelectorAll(".imgs-char img").forEach((img, index) => {
           img.addEventListener("click", () => {
-            document.querySelectorAll(".imgs-char img")
-            .forEach(i => i.classList.remove("selected"));
-            img.classList.add("selected");
-            mainImg.src = img.src;
+            selectImg(index);
           });
         });
+        const savedImg = getItem("img") || 0;
+        selectImg(savedImg);
       });
     </script>
   </body>
