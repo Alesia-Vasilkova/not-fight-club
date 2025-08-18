@@ -128,3 +128,11 @@ section {
 .hide {
   display: none;
 }
+.change-user-name img {
+    width: 25px;
+    height: 25px;
+}
+.hiden {
+    display: none;
+}
+

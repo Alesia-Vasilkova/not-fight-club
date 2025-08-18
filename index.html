@@ -57,6 +57,7 @@
         hidePages();
         const nextPage = document.querySelector("#settings-page");
         nextPage.classList.remove("hide");
+        displayNameSettings();
       }
       function editProfileImages() {
         const showModal = document.querySelector(".modal");
@@ -69,11 +70,38 @@
       function displayName() {
         const savedName = getItem("name");
         const outPutSect = document.getElementById("userName");
-        outPutSect.textContent = savedName
-          ? "Player Name: " + savedName
-          : "Something went wrong";
+        outPutSect.textContent = savedName ? savedName : "Something went wrong";
       }
+      function displayNameSettings() {
+        const savedName = getItem("name");
+        const outPutSect = document.getElementById("userNameSettings");
+        const outPutNameInput = document.getElementById(
+          "userNameSettingsInput"
+        );
+        outPutSect.textContent = savedName ? savedName : "Something went wrong";
+        outPutNameInput.value = getItem("name");
+      }
+      function changeButtonEdit(edit = true) {
+        const inputButtonHiden = document.querySelectorAll(".tools");
+        const inputButtonNoHiden = document.querySelectorAll(".changeUserName");
+        const toHide = !edit ? inputButtonHiden : inputButtonNoHiden;
+        const toShow = edit ? inputButtonHiden : inputButtonNoHiden;
 
+        toShow.forEach((tools) => {
+          tools.classList.remove("hide");
+        });
+        toHide.forEach((changeUserName) => {
+          changeUserName.classList.add("hide");
+        });
+      }
+      function changeSaveName() {
+        changeButtonEdit(false);
+        const setItemName = document.getElementById("userNameSettingsInput");
+        const newName = setItemName.value;
+        setItem({ name: newName });
+        displayName();
+        displayNameSettings();
+      }
       function selectImg(index) {
         const mainImg = document.querySelector(".main-img-char img");
         document.querySelectorAll(".imgs-char img").forEach((img, i) => {
@@ -212,6 +240,10 @@
         </div>
         <div class="charInf">
           <span id="userName"> </span>
+          <div class="userResults">
+            <span id="userWins"> Wins: 0 </span>
+            <span id="userLoses"> Loses: 0 </span>
+          </div>
         </div>
       </div>
     </section>
@@ -238,7 +270,15 @@
         </div>
       </div>
       <div class="cont-settings">
-        <label>Player name:</label>
+        <span id="PlayerName">Player name: </span>
+        <span id="userNameSettings" class="changeUserName"> </span>
+        <input type="text" id="userNameSettingsInput" class="tools hide" />
+        <button class="changeUserName" onclick="changeButtonEdit()">
+          Edit
+        </button>
+        <button class="tools save-button hide" onclick="changeSaveName()">
+          Save
+        </button>
       </div>
     </section>
     <script>
