@@ -16,7 +16,7 @@
       }
       function getItem(key) {
         const outPut = localStorage.getItem("userSettings");
-        const parseSettings = JSON.parse(outPut);
+        const parseSettings = JSON.parse(outPut || "{}");
         const savedInfo = parseSettings[key];
         return savedInfo;
       }
@@ -41,6 +41,10 @@
         hidePages();
         const nextPage = document.querySelector("#battle-page");
         nextPage.classList.remove("hide");
+        displayName();
+        const showImageFromStorage =
+          document.querySelectorAll(".chosen-img-char");
+        showImageFromStorage.value = getItem("img");
       }
       function mainInfo() {
         hidePages();
@@ -71,6 +75,13 @@
         const savedName = getItem("name");
         const outPutSect = document.getElementById("userName");
         outPutSect.textContent = savedName ? savedName : "Something went wrong";
+      }
+      function displayNameBattle() {
+        const savedNameBattle = getItem("name");
+        const outPutName = document.getElementById("userNameBattle");
+        outPutName.textContent = savedNameBattle
+          ? savedNameBattle
+          : "Something went wrong";
       }
       function displayNameSettings() {
         const savedName = getItem("name");
@@ -103,12 +114,14 @@
         displayNameSettings();
       }
       function selectImg(index) {
-        const mainImg = document.querySelector(".main-img-char img");
-        document.querySelectorAll(".imgs-char img").forEach((img, i) => {
+        const mainImgs = document.querySelectorAll(".main-img-char .img");
+        document.querySelectorAll(".imgs-char .img").forEach((img, i) => {
           img.classList.remove("selected");
           if (index === i) {
             img.classList.add("selected");
-            mainImg.src = img.src;
+            mainImgs.forEach((mI) => {
+              mI.src = img.src;
+            });
             setItem({ img: index });
           }
         });
@@ -176,6 +189,89 @@
           </button>
         </div>
       </div>
+      <div class="fightField">
+        <div class="characterField">
+          <span id="userName"> </span>
+          <div class="chosen-img-char main-img-char">
+            <img
+              class="img"
+              src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
+            />
+          </div>
+          <div class="viewCharacter"></div>
+          <div class="healthCharacter">
+            <progress
+              class="HealthCharacterBar"
+              value="100"
+              max="100"
+            ></progress>
+            <p class="amountHelthCharacter">150 / 150</p>
+          </div>
+        </div>
+        <div class="fightZone">
+          <p>Please pick 1 Attack zone and 2 Defence zones</p>
+          <div class="deathZone">
+            <div class="attackZone">
+              <p>Attack Zones</p>
+              <div class="radioContainer">
+                <label>Head</label>
+                <input type="radio" />
+              </div>
+              <div class="radioContainer">
+                <label>Neck</label>
+                <input type="radio" />
+              </div>
+              <div class="radioContainer">
+                <label>Body</label>
+                <input type="radio" />
+              </div>
+              <div class="radioContainer">
+                <label>Belly</label>
+                <input type="radio" />
+              </div>
+              <div class="radioContainer">
+                <label>Legs</label>
+                <input type="radio" />
+              </div>
+            </div>
+            <div class="lineBetweenZones"></div>
+            <div class="defenceZone">
+              <p>Defence Zones</p>
+              <div class="radioContainerDefence">
+                <input type="radio" />
+                <label>Head</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input type="radio" />
+                <label>Neck</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input type="radio" />
+                <label>Body</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input type="radio" />
+                <label>Belly</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input type="radio" />
+                <label>Legs</label>
+              </div>
+            </div>
+          </div>
+          <button class="attackButton">Attack</button>
+        </div>
+        <div class="enemyField">
+          <span id="enemyName">Crab</span>
+          <div class="viewEnemy">
+            <img src="assets/characters/enemy.png" />
+          </div>
+          <div class="healthEnemy">
+            <progress class="HealthEnemyBar" value="100" max="100"></progress>
+            <p class="amountHelthEnemy">100 / 100</p>
+          </div>
+        </div>
+      </div>
     </section>
     <section class="profile-character page" id="character-page">
       <div class="modal hide">
@@ -184,19 +280,22 @@
             <img
               src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
               id="1"
-              class="selected"
+              class="img selected"
             />
             <img
               src="assets/characters/vecteezy_adorable-video-game-character-for-t-shirt-artwork_27294891.png"
               id="2"
+              class="img"
             />
             <img
               src="assets/characters/vecteezy_cute-game-character-for-t-shirt-design-generative-ai_27294914.png"
               id="3"
+              class="img"
             />
             <img
               src="assets/characters/vecteezy_engaging-video-game-character-for-t-shirt-design-generative-ai_27294892.png"
               id="4"
+              class="img"
             />
           </div>
           <button class="closeModalbtn" onclick="closeProfileImages()">
@@ -230,6 +329,7 @@
       <div class="img-char">
         <div class="main-img-char">
           <img
+            class="img"
             src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
           />
           <button class="modalscreen" onclick="editProfileImages()">
@@ -284,7 +384,9 @@
     <script>
       hidePages();
 
-      const nextPage = document.querySelector("#sign-up");
+      const nextPage = document.querySelector(
+        getItem("name") ? "#main-page" : "#sign-up"
+      );
       nextPage.classList.remove("hide");
 
       document.addEventListener("DOMContentLoaded", () => {

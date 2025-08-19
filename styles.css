@@ -79,7 +79,7 @@ section {
   border-radius: 1rem;
 }
 .imgs-char img.selected {
-    border-color: rgb(55, 54, 48);
+  border-color: rgb(55, 54, 48);
   box-shadow: 0 0 10px rgb(55, 54, 48);
 }
 .modalscreen {
@@ -129,10 +129,51 @@ section {
   display: none;
 }
 .change-user-name img {
-    width: 25px;
-    height: 25px;
+  width: 25px;
+  height: 25px;
 }
-.hiden {
-    display: none;
+.fightField {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 90px;
 }
-
+.viewEnemy img {
+  width: 200px;
+}
+.chosen-img-char img {
+  width: 200px;
+}
+.lineBetweenZones {
+  width: 1px;
+  background-color: #000;
+}
+.deathZone {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.attackZone {
+  display: grid;
+  align-items: right;
+}
+.fightZone button {
+  display: flex;
+  margin: 20px 120px;
+}
+.characterField {
+  display: grid;
+  justify-items: center;
+}
+.healthCharacter {
+  display: grid;
+  justify-items: center;
+}
+.enemyField {
+  display: grid;
+  justify-items: center;
+}
+.healthEnemy {
+  display: grid;
+  justify-items: center;
+}
