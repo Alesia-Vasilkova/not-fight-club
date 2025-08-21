@@ -7,6 +7,73 @@
     <link rel="stylesheet" href="styles.css" />
     <title>Not Fight Club</title>
     <script>
+      const enemies = [
+        { name: "Crab", img: "assets/characters/enemy.png", attack: 2, def: 1 },
+        {
+          name: "Gorilla",
+          img: "assets/characters/gorilla.png",
+          attack: 1,
+          def: 2,
+        },
+      ];
+      const getRandomNumber = (n) => {
+        return Math.floor(Math.random() * n);
+      };
+      function getRandomEnemy() {
+        if (enemies.length === 0) {
+          return null;
+        }
+        const randomIndex = getRandomNumber(enemies.length);
+        return randomIndex;
+      }
+      function getZones(count) {
+        const zones = [];
+        while (zones.length < count) {
+          const randomNumber = getRandomNumber(4);
+          if (!zones.includes(randomNumber)) {
+            zones.push(randomNumber);
+          }
+        }
+        return zones;
+      }
+      function attack(toAttack, enemy) {
+        const defs = enemy.def;
+        const zones = getZones(defs);
+        if (zones.includes(toAttack)) {
+          return false;
+        }
+        return true;
+      }
+      function defence(toDefence, enemy) {
+        const attacks = enemy.attack;
+        const zones = getZones(attacks);
+        let amount = 0;
+        zones.forEach((elem) => {
+          if (!toDefence.includes(elem)) {
+            amount++;
+          }
+        });
+        return amount;
+      }
+      function makeTurn() {
+        const enemID = getItem("enemyID");
+        const successfullAttack = attack(
+          selectedOptions.attack,
+          enemies[enemID]
+        );
+        const missedDefence = defence(selectedOptions.defence, enemies[enemID]);
+
+        if (successfullAttack) {
+          console.log("attack was successfull");
+        } else {
+          console.log("you are loser");
+        }
+        if (missedDefence === 0) {
+          console.log("success defence");
+        } else {
+          console.log(`you lost ${missedDefence} times`);
+        }
+      }
       function setItem(obj) {
         const prev = JSON.parse(localStorage.getItem("userSettings") || "{}");
         localStorage.setItem(
@@ -45,6 +112,62 @@
         const showImageFromStorage =
           document.querySelectorAll(".chosen-img-char");
         showImageFromStorage.value = getItem("img");
+
+        const enemyName = document.querySelector("#enemyName");
+        const enemyImg = document.querySelector(".viewEnemy img");
+
+        const enemID = getRandomEnemy();
+        const enem = enemies[enemID];
+        setItem({ enemyID: enemID });
+        enemyName.innerHTML = enem.name;
+        enemyImg.src = enem.img;
+        handleRadioClickDefence();
+      }
+      const selectedOptions = { attack: undefined, defence: [] };
+      function handleRadioClick(clickedRadio) {
+        const radioButtons = document.querySelectorAll(".attackZone input");
+        for (let i = 0; i < radioButtons.length; i++) {
+          if (radioButtons[i].name !== clickedRadio.name) {
+            radioButtons[i].checked = false;
+          }
+        }
+        selectedOptions.attack = clickedRadio.name;
+      }
+      function handleRadioClickDefence() {
+        const fieldWithButtons = document.querySelector(".defenceZone");
+        const radioButtons = fieldWithButtons.querySelectorAll(
+          'input[type="radio"]'
+        );
+        const maxSelections = 2;
+        let selectedCount = 0;
+
+        radioButtons.forEach((radio) => {
+          radio.addEventListener("change", () => {
+            if (radio.checked) {
+              selectedCount++;
+            } else {
+              selectedCount--;
+            }
+            if (selectedCount > 2) {
+              radio.checked = false;
+              selectedCount--;
+            } else if (selectedCount < 0) {
+              selectedCount = 0;
+            }
+            if (selectedCount > 0 && !radio.checked) {
+              radioButtons.forEach((otherRadio) => {
+                if (otherRadio !== radio && otherRadio.checked) {
+                  otherRadio.checked = false;
+                  selectedCount--;
+                  return;
+                }
+              });
+            }
+            if (selectedCount === 0) {
+              radio.checked = false;
+            }
+          });
+        });
       }
       function mainInfo() {
         hidePages();
@@ -215,54 +338,54 @@
               <p>Attack Zones</p>
               <div class="radioContainer">
                 <label>Head</label>
-                <input type="radio" />
+                <input type="radio" name="0" onclick="handleRadioClick(this)" />
               </div>
               <div class="radioContainer">
                 <label>Neck</label>
-                <input type="radio" />
+                <input type="radio" name="1" onclick="handleRadioClick(this)" />
               </div>
               <div class="radioContainer">
                 <label>Body</label>
-                <input type="radio" />
+                <input type="radio" name="2" onclick="handleRadioClick(this)" />
               </div>
               <div class="radioContainer">
                 <label>Belly</label>
-                <input type="radio" />
+                <input type="radio" name="3" onclick="handleRadioClick(this)" />
               </div>
               <div class="radioContainer">
                 <label>Legs</label>
-                <input type="radio" />
+                <input type="radio" name="4" onclick="handleRadioClick(this)" />
               </div>
             </div>
             <div class="lineBetweenZones"></div>
             <div class="defenceZone">
               <p>Defence Zones</p>
               <div class="radioContainerDefence">
-                <input type="radio" />
+                <input type="radio" id="group2" />
                 <label>Head</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" />
+                <input type="radio" id="group2" />
                 <label>Neck</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" />
+                <input type="radio" id="group2" />
                 <label>Body</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" />
+                <input type="radio" id="group2" />
                 <label>Belly</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" />
+                <input type="radio" id="group2" />
                 <label>Legs</label>
               </div>
             </div>
           </div>
-          <button class="attackButton">Attack</button>
+          <button class="attackButton" onclick="makeTurn()">Attack!</button>
         </div>
         <div class="enemyField">
-          <span id="enemyName">Crab</span>
+          <span id="enemyName">...</span>
           <div class="viewEnemy">
             <img src="assets/characters/enemy.png" />
           </div>
@@ -272,6 +395,7 @@
           </div>
         </div>
       </div>
+      <div class="log-container">logs</div>
     </section>
     <section class="profile-character page" id="character-page">
       <div class="modal hide">

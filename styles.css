@@ -177,3 +177,13 @@ section {
   display: grid;
   justify-items: center;
 }
+.log-container {
+  border-top: 3px solid #000;
+}
+.radioContainer {
+  display: flex;
+  justify-content: right;
+}
+.attackButton {
+    cursor: pointer;
+}
