@@ -7,13 +7,22 @@
     <link rel="stylesheet" href="styles.css" />
     <title>Not Fight Club</title>
     <script>
+      const maxSelections = 2;
+      let selectedCount = 0;
       const enemies = [
-        { name: "Crab", img: "assets/characters/enemy.png", attack: 2, def: 1 },
+        {
+          name: "Crab",
+          img: "assets/characters/enemy.png",
+          attack: 2,
+          def: 1,
+          hpEnem: 150,
+        },
         {
           name: "Gorilla",
           img: "assets/characters/gorilla.png",
           attack: 1,
           def: 2,
+          hpEnem: 100,
         },
       ];
       const bodyParts = {
@@ -67,7 +76,16 @@
         });
         return result;
       }
+      function damage(isHero = false) {
+        if (isHero) {
+          const prev = getItem("hp");
+          setItem({ hp: prev - 10 });
+          return;
+        }
 
+        const prev = getItem("hpEnem");
+        setItem({ hpEnem: prev - 10 });
+      }
       function makeTurn() {
         const enemID = getItem("enemyID");
         const attackRes = attack(selectedOptions.attack, enemies[enemID]);
@@ -80,10 +98,6 @@
           (key) => !defendRes[key]
         );
         const missed = Object.keys(defendRes).filter((key) => defendRes[key]);
-        const progressEnemy = document.querySelector(".HealthEnemyBar");
-        let currentValueEnemy = parseInt(progressEnemy.value);
-        const progressCharacter = document.querySelector(".HealthCharacterBar");
-        let currentValueCharacter = parseInt(progressCharacter.value);
         const logsTerritory = document.querySelector(".log-container");
         const savedNameCharacter = getItem("name");
         const savedNameEnemy = enemies[enemID].name;
@@ -91,43 +105,56 @@
         const logArray = [];
         if (successfullAttack) {
           logArray.push(`We successfully attacked ${selectedOptions.attack}`);
+          damage();
         } else {
           logArray.push(
             `We missed attacked ${selectedOptions.attack} because enemy defended ${selectedOptions.attack}`
           );
         }
-        defended.forEach((zone) => {
-          logArray.push(
-            `Enemy attacked ${bodyParts[zone.toString()]} but we defended ${
-              bodyParts[zone.toString()]
-            }`
-          );
-        });
-        missed.forEach((zone) => {
-          logArray.push(
-            `Enemy successfullt attacked ${bodyParts[zone.toString()]}`
-          );
+
+        if (getItem("hpEnem") > 0) {
+          defended.forEach((zone) => {
+            logArray.push(
+              `Enemy attacked ${bodyParts[zone.toString()]} but we defended ${
+                bodyParts[zone.toString()]
+              }`
+            );
+          });
+          missed.forEach((zone) => {
+            damage(true);
+            logArray.push(
+              `Enemy successfully attacked ${bodyParts[zone.toString()]}`
+            );
+          });
+        }
+
+        renderHP(enemID);
+
+        let finished = false;
+        if (getItem("hpEnem") <= 0) {
+          logArray.push(`We win`);
+          finished = true;
+        }
+
+        if (getItem("hp") <= 0) {
+          logArray.push(`We lose`);
+          finished = true;
+        }
+
+        const logContainer = document.querySelector(".log-container");
+        logArray.forEach((log) => {
+          const logElement = document.createElement("p");
+          const newContent = document.createTextNode(log);
+
+          logElement.appendChild(newContent);
+          logContainer.appendChild(logElement);
         });
 
-        console.log(logArray);
-        // if (successfullAttack) {
-        //   progressEnemy.value = currentValueEnemy - 10;
-        //   console.log(
-        //     `${savedNameCharacter} attacked ${savedNameEnemy} to ${selectedOptions.attack} and deal 10 damage`
-        //   );
-        // } else {
-        //   progressEnemy.value === currentValueEnemy;
-        //   console.log(
-        //     `${savedNameCharacter} attacked ${savedNameEnemy} to ${selectedOptions.attack} but ${savedNameEnemy} was able to protect his ${selectedOptions.attack}`
-        //   );
-        // }
-        // if (missedDefence === 0) {
-        //   progressCharacter === currentValueCharacter;
-        //   console.log(`${savedNameEnemy} attacked ${savedNameCharacter} to `);
-        // } else {
-        //   progressCharacter.value = currentValueCharacter - 10 * missedDefence;
-        //   console.log(`you lost ${missedDefence} times`);
-        // }
+        selectedCount = 0;
+        if (finished) {
+          setItem({ enemyID: undefined });
+          fight();
+        }
       }
       function setItem(obj) {
         const prev = JSON.parse(localStorage.getItem("userSettings") || "{}");
@@ -159,83 +186,84 @@
         const nextPage = document.querySelector(".main-home");
         nextPage.classList.remove("hide");
       }
+      function setEnemy(enemID) {
+        const enemyImg = document.querySelector(".viewEnemy img");
+
+        const enem = enemies[enemID];
+        setItem({ enemyID: enemID });
+        enemyName.innerHTML = enem.name;
+        enemyImg.src = enem.img;
+      }
+      function renderHP(enemyID) {
+        const progressCharacter = document.querySelector(".HealthCharacterBar");
+        const progressEnemy = document.querySelector(".HealthEnemyBar");
+
+        const characterHP = document.getElementById("hp_cur");
+        const characterHPMax = document.getElementById("hp_max");
+        const enemyHP = document.getElementById("enemy_hp_cur");
+        const enemyHPMax = document.getElementById("enemy_hp_max");
+
+        characterHP.innerHTML = getItem("hp");
+        characterHPMax.innerHTML = 150;
+        enemyHP.innerHTML = getItem("hpEnem");
+        enemyHPMax.innerHTML = enemies[enemyID].hpEnem;
+
+        progressCharacter.value = (getItem("hp") / 150) * 100;
+        progressEnemy.value =
+          (getItem("hpEnem") / enemies[enemyID].hpEnem) * 100;
+      }
       function fight() {
         hidePages();
         const nextPage = document.querySelector("#battle-page");
         nextPage.classList.remove("hide");
-        displayName();
         const showImageFromStorage =
           document.querySelectorAll(".chosen-img-char");
         showImageFromStorage.value = getItem("img");
 
         const enemyName = document.querySelector("#enemyName");
-        const enemyImg = document.querySelector(".viewEnemy img");
 
-        const enemID = getRandomEnemy();
-        const enem = enemies[enemID];
-        setItem({ enemyID: enemID });
-        enemyName.innerHTML = enem.name;
-        enemyImg.src = enem.img;
-        handleRadioClickDefence();
+        const enemID = getItem("enemyID");
+        const hp = getItem("hp");
+        const hpEnem = getItem("hpEnem");
+        const enemIDNew = enemID ?? getRandomEnemy();
+        setEnemy(enemIDNew);
+        if (enemID === undefined || hpEnem <= 0 || hp <= 0) {
+          setItem({ hp: 150, hpEnem: enemies[enemIDNew].hpEnem });
+        }
+
+        renderHP(enemIDNew);
       }
       const selectedOptions = { attack: undefined, defence: [] };
       function handleRadioClick(clickedRadio) {
         const radioButtons = document.querySelectorAll(".attackZone input");
         for (let i = 0; i < radioButtons.length; i++) {
-          if (radioButtons[i].name !== clickedRadio.name) {
+          if (radioButtons[i].part !== clickedRadio.part) {
             radioButtons[i].checked = false;
           }
         }
-        selectedOptions.attack = clickedRadio.name;
+        selectedOptions.attack = clickedRadio.part;
       }
-      function handleRadioClickDefence() {
-        const fieldWithButtons = document.querySelector(".defenceZone");
-        const radioButtons = fieldWithButtons.querySelectorAll(
-          'input[type="radio"]'
+      function handleRadioClickDefence(selectedRadio) {
+        const radioButtons = document.querySelectorAll(
+          '.defenceZone input[type="radio"]'
         );
-        const maxSelections = 2;
-        let selectedCount = 0;
+
+        selectedOptions.defence = [];
+
+        selectedRadio.checked = true;
+        selectedCount++;
 
         radioButtons.forEach((radio) => {
-          radio.addEventListener("change", () => {
-            if (radio.checked) {
-              selectedCount++;
-            } else {
-              selectedCount--;
-            }
-            if (selectedCount > 2) {
-              radio.checked = false;
-              selectedCount--;
-            } else if (selectedCount < 0) {
-              selectedCount = 0;
-            }
-            if (selectedCount > 0 && !radio.checked) {
-              radioButtons.forEach((otherRadio) => {
-                if (otherRadio !== radio && otherRadio.checked) {
-                  otherRadio.checked = false;
-                  selectedCount--;
-                  return;
-                }
-              });
-            }
-            if (selectedCount === 0) {
-              radio.checked = false;
-            }
+          if (selectedCount > 2 && selectedRadio.part !== radio.part) {
+            radio.checked = false;
+          }
 
-            if (
-              radio.checked &&
-              !selectedOptions.defence.includes(radio.name)
-            ) {
-              selectedOptions.defence.push(radio.name);
-            }
-
-            if (!radio.checked) {
-              selectedOptions.defence = selectedOptions.defence.filter(
-                (d) => d !== radio.name
-              );
-            }
-          });
+          if (radio.checked) selectedOptions.defence.push(radio.part);
         });
+
+        if (selectedCount > 2) {
+          selectedCount = 1;
+        }
       }
       function mainInfo() {
         hidePages();
@@ -264,8 +292,10 @@
       }
       function displayName() {
         const savedName = getItem("name");
-        const outPutSect = document.getElementById("userName");
-        outPutSect.textContent = savedName ? savedName : "Something went wrong";
+        const outPutSect = document.querySelectorAll("#userName");
+        outPutSect.forEach((elem) => {
+          elem.textContent = savedName ? savedName : "Something went wrong";
+        });
       }
       function displayNameBattle() {
         const savedNameBattle = getItem("name");
@@ -396,7 +426,9 @@
               value="100"
               max="100"
             ></progress>
-            <p class="amountHelthCharacter">150 / 150</p>
+            <p class="amountHelthCharacter">
+              <span id="hp_cur"></span> / <span id="hp_max"></span>
+            </p>
           </div>
         </div>
         <div class="fightZone">
@@ -408,7 +440,7 @@
                 <label for="HeadAttack">Head</label>
                 <input
                   type="radio"
-                  name="Head"
+                  part="Head"
                   id="HeadAttack"
                   onclick="handleRadioClick(this)"
                 />
@@ -417,7 +449,7 @@
                 <label for="NeckAttack">Neck</label>
                 <input
                   type="radio"
-                  name="Neck"
+                  part="Neck"
                   id="NeckAttack"
                   onclick="handleRadioClick(this)"
                 />
@@ -426,7 +458,7 @@
                 <label for="BodyAttack">Body</label>
                 <input
                   type="radio"
-                  name="Body"
+                  part="Body"
                   id="BodyAttack"
                   onclick="handleRadioClick(this)"
                 />
@@ -435,7 +467,7 @@
                 <label for="BellyAttack">Belly</label>
                 <input
                   type="radio"
-                  name="Belly"
+                  part="Belly"
                   id="BellyAttack"
                   onclick="handleRadioClick(this)"
                 />
@@ -444,7 +476,7 @@
                 <label for="LegsAttack">Legs</label>
                 <input
                   type="radio"
-                  name="Legs"
+                  part="Legs"
                   id="LegsAttack"
                   onclick="handleRadioClick(this)"
                 />
@@ -454,23 +486,48 @@
             <div class="defenceZone">
               <p>Defence Zones</p>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2Head" name="Head" />
+                <input
+                  type="radio"
+                  id="group2Head"
+                  part="Head"
+                  onclick="handleRadioClickDefence(this)"
+                />
                 <label for="group2Head">Head</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2Neck" name="Neck" />
+                <input
+                  type="radio"
+                  id="group2Neck"
+                  part="Neck"
+                  onclick="handleRadioClickDefence(this)"
+                />
                 <label for="group2Neck">Neck</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2Body" name="Body" />
+                <input
+                  type="radio"
+                  id="group2Body"
+                  part="Body"
+                  onclick="handleRadioClickDefence(this)"
+                />
                 <label for="group2Body">Body</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2Belly" name="Belly" />
+                <input
+                  type="radio"
+                  id="group2Belly"
+                  part="Belly"
+                  onclick="handleRadioClickDefence(this)"
+                />
                 <label for="group2Belly">Belly</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2Legs" name="Legs" />
+                <input
+                  type="radio"
+                  id="group2Legs"
+                  part="Legs"
+                  onclick="handleRadioClickDefence(this)"
+                />
                 <label for="group2Legs">Legs</label>
               </div>
             </div>
@@ -484,7 +541,9 @@
           </div>
           <div class="healthEnemy">
             <progress class="HealthEnemyBar" value="100" max="100"></progress>
-            <p class="amountHelthEnemy">100 / 100</p>
+            <p class="amountHelthEnemy">
+              <span id="enemy_hp_cur"></span> / <span id="enemy_hp_max"></span>
+            </p>
           </div>
         </div>
       </div>
@@ -600,10 +659,19 @@
     </section>
     <script>
       hidePages();
+      displayName();
 
-      const nextPage = document.querySelector(
-        getItem("name") ? "#main-page" : "#sign-up"
-      );
+      const nededPage = (() => {
+        if (!getItem("name")) {
+          return "#sign-up";
+        }
+        if (getItem("enemyID") !== undefined) {
+          fight();
+          return "#battle-page";
+        }
+        return "#main-page";
+      })();
+      const nextPage = document.querySelector(nededPage);
       nextPage.classList.remove("hide");
 
       document.addEventListener("DOMContentLoaded", () => {
