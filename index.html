@@ -16,6 +16,13 @@
           def: 2,
         },
       ];
+      const bodyParts = {
+        0: "Head",
+        1: "Neck",
+        2: "Body",
+        3: "Belly",
+        4: "Legs",
+      };
       const getRandomNumber = (n) => {
         return Math.floor(Math.random() * n);
       };
@@ -39,40 +46,88 @@
       function attack(toAttack, enemy) {
         const defs = enemy.def;
         const zones = getZones(defs);
-        if (zones.includes(toAttack)) {
-          return false;
+        const resAttack = {};
+        zones.forEach((zone) => {
+          resAttack[zone] = true;
+        });
+        if (!zones.some((zone) => bodyParts[zone.toString()] === toAttack)) {
+          resAttack[toAttack] = false;
         }
-        return true;
+        return resAttack;
       }
       function defence(toDefence, enemy) {
         const attacks = enemy.attack;
         const zones = getZones(attacks);
-        let amount = 0;
-        zones.forEach((elem) => {
-          if (!toDefence.includes(elem)) {
-            amount++;
+        const result = {};
+        zones.forEach((zone) => {
+          result[zone] = false;
+          if (!toDefence.includes(bodyParts[zone.toString()])) {
+            result[zone] = true;
           }
         });
-        return amount;
+        return result;
       }
+
       function makeTurn() {
         const enemID = getItem("enemyID");
-        const successfullAttack = attack(
-          selectedOptions.attack,
-          enemies[enemID]
+        const attackRes = attack(selectedOptions.attack, enemies[enemID]);
+        const successfullAttack = Object.keys(attackRes).some(
+          (key) => !attackRes[key]
         );
-        const missedDefence = defence(selectedOptions.defence, enemies[enemID]);
 
+        const defendRes = defence(selectedOptions.defence, enemies[enemID]);
+        const defended = Object.keys(defendRes).filter(
+          (key) => !defendRes[key]
+        );
+        const missed = Object.keys(defendRes).filter((key) => defendRes[key]);
+        const progressEnemy = document.querySelector(".HealthEnemyBar");
+        let currentValueEnemy = parseInt(progressEnemy.value);
+        const progressCharacter = document.querySelector(".HealthCharacterBar");
+        let currentValueCharacter = parseInt(progressCharacter.value);
+        const logsTerritory = document.querySelector(".log-container");
+        const savedNameCharacter = getItem("name");
+        const savedNameEnemy = enemies[enemID].name;
+
+        const logArray = [];
         if (successfullAttack) {
-          console.log("attack was successfull");
+          logArray.push(`We successfully attacked ${selectedOptions.attack}`);
         } else {
-          console.log("you are loser");
+          logArray.push(
+            `We missed attacked ${selectedOptions.attack} because enemy defended ${selectedOptions.attack}`
+          );
         }
-        if (missedDefence === 0) {
-          console.log("success defence");
-        } else {
-          console.log(`you lost ${missedDefence} times`);
-        }
+        defended.forEach((zone) => {
+          logArray.push(
+            `Enemy attacked ${bodyParts[zone.toString()]} but we defended ${
+              bodyParts[zone.toString()]
+            }`
+          );
+        });
+        missed.forEach((zone) => {
+          logArray.push(
+            `Enemy successfullt attacked ${bodyParts[zone.toString()]}`
+          );
+        });
+
+        console.log(logArray);
+        // if (successfullAttack) {
+        //   progressEnemy.value = currentValueEnemy - 10;
+        //   console.log(
+        //     `${savedNameCharacter} attacked ${savedNameEnemy} to ${selectedOptions.attack} and deal 10 damage`
+        //   );
+        // } else {
+        //   progressEnemy.value === currentValueEnemy;
+        //   console.log(
+        //     `${savedNameCharacter} attacked ${savedNameEnemy} to ${selectedOptions.attack} but ${savedNameEnemy} was able to protect his ${selectedOptions.attack}`
+        //   );
+        // }
+        // if (missedDefence === 0) {
+        //   progressCharacter === currentValueCharacter;
+        //   console.log(`${savedNameEnemy} attacked ${savedNameCharacter} to `);
+        // } else {
+        //   progressCharacter.value = currentValueCharacter - 10 * missedDefence;
+        //   console.log(`you lost ${missedDefence} times`);
+        // }
       }
       function setItem(obj) {
         const prev = JSON.parse(localStorage.getItem("userSettings") || "{}");
@@ -165,6 +220,19 @@
             }
             if (selectedCount === 0) {
               radio.checked = false;
+            }
+
+            if (
+              radio.checked &&
+              !selectedOptions.defence.includes(radio.name)
+            ) {
+              selectedOptions.defence.push(radio.name);
+            }
+
+            if (!radio.checked) {
+              selectedOptions.defence = selectedOptions.defence.filter(
+                (d) => d !== radio.name
+              );
             }
           });
         });
@@ -337,48 +405,73 @@
             <div class="attackZone">
               <p>Attack Zones</p>
               <div class="radioContainer">
-                <label>Head</label>
-                <input type="radio" name="0" onclick="handleRadioClick(this)" />
+                <label for="HeadAttack">Head</label>
+                <input
+                  type="radio"
+                  name="Head"
+                  id="HeadAttack"
+                  onclick="handleRadioClick(this)"
+                />
               </div>
               <div class="radioContainer">
-                <label>Neck</label>
-                <input type="radio" name="1" onclick="handleRadioClick(this)" />
+                <label for="NeckAttack">Neck</label>
+                <input
+                  type="radio"
+                  name="Neck"
+                  id="NeckAttack"
+                  onclick="handleRadioClick(this)"
+                />
               </div>
               <div class="radioContainer">
-                <label>Body</label>
-                <input type="radio" name="2" onclick="handleRadioClick(this)" />
+                <label for="BodyAttack">Body</label>
+                <input
+                  type="radio"
+                  name="Body"
+                  id="BodyAttack"
+                  onclick="handleRadioClick(this)"
+                />
               </div>
               <div class="radioContainer">
-                <label>Belly</label>
-                <input type="radio" name="3" onclick="handleRadioClick(this)" />
+                <label for="BellyAttack">Belly</label>
+                <input
+                  type="radio"
+                  name="Belly"
+                  id="BellyAttack"
+                  onclick="handleRadioClick(this)"
+                />
               </div>
               <div class="radioContainer">
-                <label>Legs</label>
-                <input type="radio" name="4" onclick="handleRadioClick(this)" />
+                <label for="LegsAttack">Legs</label>
+                <input
+                  type="radio"
+                  name="Legs"
+                  id="LegsAttack"
+                  onclick="handleRadioClick(this)"
+                />
               </div>
             </div>
             <div class="lineBetweenZones"></div>
             <div class="defenceZone">
               <p>Defence Zones</p>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2" />
-                <label>Head</label>
+                <input type="radio" id="group2Head" name="Head" />
+                <label for="group2Head">Head</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2" />
-                <label>Neck</label>
+                <input type="radio" id="group2Neck" name="Neck" />
+                <label for="group2Neck">Neck</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2" />
-                <label>Body</label>
+                <input type="radio" id="group2Body" name="Body" />
+                <label for="group2Body">Body</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2" />
-                <label>Belly</label>
+                <input type="radio" id="group2Belly" name="Belly" />
+                <label for="group2Belly">Belly</label>
               </div>
               <div class="radioContainerDefence">
-                <input type="radio" id="group2" />
-                <label>Legs</label>
+                <input type="radio" id="group2Legs" name="Legs" />
+                <label for="group2Legs">Legs</label>
               </div>
             </div>
           </div>
