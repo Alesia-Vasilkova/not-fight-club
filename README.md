@@ -1,1 +1,1 @@
-# not-fight-club
+https://alesia-vasilkova.github.io/not-fight-club/gh-pages/

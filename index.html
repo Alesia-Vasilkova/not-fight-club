@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="assets/fight.ico" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Not Fight Club</title>
+    <script>
+      const maxSelections = 2;
+      let selectedCount = 0;
+      const enemies = [
+        {
+          name: "Crab",
+          img: "assets/characters/enemy.png",
+          attack: 2,
+          def: 1,
+          hpEnem: 150,
+        },
+        {
+          name: "Gorilla",
+          img: "assets/characters/gorilla.png",
+          attack: 1,
+          def: 2,
+          hpEnem: 100,
+        },
+      ];
+      const bodyParts = {
+        0: "Head",
+        1: "Neck",
+        2: "Body",
+        3: "Belly",
+        4: "Legs",
+      };
+      const getRandomNumber = (n) => {
+        return Math.floor(Math.random() * n);
+      };
+      function getRandomEnemy() {
+        if (enemies.length === 0) {
+          return null;
+        }
+        const randomIndex = getRandomNumber(enemies.length);
+        return randomIndex;
+      }
+      function getZones(count) {
+        const zones = [];
+        while (zones.length < count) {
+          const randomNumber = getRandomNumber(4);
+          if (!zones.includes(randomNumber)) {
+            zones.push(randomNumber);
+          }
+        }
+        return zones;
+      }
+      function attack(toAttack, enemy) {
+        const defs = enemy.def;
+        const zones = getZones(defs);
+        const resAttack = {};
+        zones.forEach((zone) => {
+          resAttack[zone] = true;
+        });
+        if (!zones.some((zone) => bodyParts[zone.toString()] === toAttack)) {
+          resAttack[toAttack] = false;
+        }
+        return resAttack;
+      }
+      function renderLogs(array, isClear = false) {
+        const logContainer = document.getElementById("log-container");
+        if (isClear) {
+          setItem({ logs: [] });
+          logContainer.innerHTML = "";
+        }
+
+        array.forEach((log) => {
+          const logElement = document.createElement("p");
+          const newContent = document.createTextNode(log);
+
+          logElement.appendChild(newContent);
+          logContainer.appendChild(logElement);
+        });
+      }
+      function defence(toDefence, enemy) {
+        const attacks = enemy.attack;
+        const zones = getZones(attacks);
+        const result = {};
+        zones.forEach((zone) => {
+          result[zone] = false;
+          if (!toDefence.includes(bodyParts[zone.toString()])) {
+            result[zone] = true;
+          }
+        });
+        return result;
+      }
+      function damage(isHero = false) {
+        if (isHero) {
+          const prev = getItem("hp");
+          setItem({ hp: prev - 10 });
+          return;
+        }
+
+        const prev = getItem("hpEnem");
+        setItem({ hpEnem: prev - 10 });
+      }
+      function closeModalWinLose() {
+        profileInfo();
+        const modalWins = document.querySelector(".win-page");
+        const modalLoses = document.querySelector(".lose-page");
+        modalWins.classList.add("hide");
+        modalLoses.classList.add("hide");
+        const buttonAttack = document.querySelector(".attackButton");
+        buttonAttack.disabled = false;
+      }
+      function makeTurn() {
+        if (
+          selectedOptions.attack === undefined ||
+          !selectedOptions.defence.length
+        ) {
+          return;
+        }
+        const enemID = getItem("enemyID");
+        const attackRes = attack(selectedOptions.attack, enemies[enemID]);
+        const successfullAttack = Object.keys(attackRes).some(
+          (key) => !attackRes[key]
+        );
+
+        const defendRes = defence(selectedOptions.defence, enemies[enemID]);
+        const defended = Object.keys(defendRes).filter(
+          (key) => !defendRes[key]
+        );
+        const missed = Object.keys(defendRes).filter((key) => defendRes[key]);
+        const savedNameCharacter = getItem("name");
+        const savedNameEnemy = enemies[enemID].name;
+
+        const logArray = [];
+        if (successfullAttack) {
+          logArray.push(
+            `${savedNameCharacter} successfully attacked ${savedNameEnemy} to ${selectedOptions.attack}`
+          );
+          damage();
+        } else {
+          logArray.push(
+            `${savedNameCharacter} missed attacked ${selectedOptions.attack} because ${savedNameEnemy} defended ${selectedOptions.attack}`
+          );
+        }
+
+        if (getItem("hpEnem") > 0) {
+          defended.forEach((zone) => {
+            logArray.push(
+              `${savedNameEnemy} attacked ${
+                bodyParts[zone.toString()]
+              } but ${savedNameCharacter} defended ${
+                bodyParts[zone.toString()]
+              }`
+            );
+          });
+          missed.forEach((zone) => {
+            damage(true);
+            logArray.push(
+              `${savedNameEnemy} attacked ${bodyParts[zone.toString()]}`
+            );
+          });
+        }
+
+        renderHP(enemID);
+
+        let finished = false;
+
+        const loses = getItem("loses");
+        const modalWins = document.querySelector(".win-page");
+        const modalLoses = document.querySelector(".lose-page");
+        const buttonAttack = document.querySelector(".attackButton");
+        buttonAttack.disabled = false;
+
+        if (getItem("hpEnem") <= 0) {
+          logArray.push(`We win`);
+          modalWins.classList.remove("hide");
+          finished = true;
+          setItem({ wins: getItem("wins") + 1 });
+          buttonAttack.disabled = true;
+        }
+
+        if (getItem("hp") <= 0) {
+          logArray.push(`We lose`);
+          modalLoses.classList.remove("hide");
+          finished = true;
+          setItem({ loses: getItem("loses") + 1 });
+          buttonAttack.disabled = true;
+        }
+
+        renderLogs(logArray);
+        const oldLogs = getItem("logs") || [];
+        oldLogs.push(...logArray);
+        setItem({ logs: oldLogs });
+
+        selectedCount = 0;
+        if (finished) {
+          setItem({ enemyID: undefined });
+          const radioButtons = document.querySelectorAll(
+            '#battle-page input[type="radio"]'
+          );
+          radioButtons.forEach((input) => {
+            input.checked = false;
+          });
+          selectedOptions.attack = undefined;
+          selectedOptions.defence = [];
+          fight();
+        }
+      }
+      function setItem(obj) {
+        const prev = JSON.parse(localStorage.getItem("userSettings") || "{}");
+        localStorage.setItem(
+          "userSettings",
+          JSON.stringify({ ...prev, ...obj })
+        );
+      }
+      function getItem(key) {
+        const outPut = localStorage.getItem("userSettings");
+        const parseSettings = JSON.parse(outPut || "{}");
+        const savedInfo = parseSettings[key];
+        return savedInfo;
+      }
+      function hidePages() {
+        const pages = document.querySelectorAll(".page");
+        pages.forEach((page) => {
+          page.classList.add("hide");
+        });
+      }
+      function login() {
+        const un = document.getElementById("user-name");
+        const val = un.value;
+        if (val === "") {
+          return;
+        }
+        setItem({ name: val, wins: 0, loses: 0 });
+        hidePages();
+        const nextPage = document.querySelector(".main-home");
+        nextPage.classList.remove("hide");
+        setItem({ page: ".main-home" });
+      }
+      function setEnemy(enemID) {
+        const enemyImg = document.querySelector(".viewEnemy img");
+
+        const enem = enemies[enemID];
+        setItem({ enemyID: enemID });
+        enemyName.innerHTML = enem.name;
+        enemyImg.src = enem.img;
+      }
+      function renderHP(enemyID) {
+        const progressCharacter = document.querySelector(".HealthCharacterBar");
+        const progressEnemy = document.querySelector(".HealthEnemyBar");
+
+        const characterHP = document.getElementById("hp_cur");
+        const characterHPMax = document.getElementById("hp_max");
+        const enemyHP = document.getElementById("enemy_hp_cur");
+        const enemyHPMax = document.getElementById("enemy_hp_max");
+
+        characterHP.innerHTML = getItem("hp");
+        characterHPMax.innerHTML = 150;
+        enemyHP.innerHTML = getItem("hpEnem");
+        enemyHPMax.innerHTML = enemies[enemyID].hpEnem;
+
+        progressCharacter.value = (getItem("hp") / 150) * 100;
+        progressEnemy.value =
+          (getItem("hpEnem") / enemies[enemyID].hpEnem) * 100;
+      }
+      function fight() {
+        hidePages();
+        const nextPage = document.querySelector("#battle-page");
+        nextPage.classList.remove("hide");
+        setItem({ page: "#battle-page" });
+        const showImageFromStorage =
+          document.querySelectorAll(".chosen-img-char");
+        showImageFromStorage.value = getItem("img");
+
+        displayName();
+
+        const enemyName = document.querySelector("#enemyName");
+
+        const enemID = getItem("enemyID");
+        const hp = getItem("hp");
+        const hpEnem = getItem("hpEnem");
+        const enemIDNew = enemID ?? getRandomEnemy();
+        setEnemy(enemIDNew);
+        if (enemID === undefined || hpEnem <= 0 || hp <= 0) {
+          renderLogs([], true);
+          setItem({ hp: 150, hpEnem: enemies[enemIDNew].hpEnem });
+        }
+
+        if (enemID !== undefined) {
+          const logs = getItem("logs");
+          renderLogs(logs);
+        }
+
+        renderHP(enemIDNew);
+        console.log("I have 2 enemies: Crab and Gorilla. I don't have critical mechanic and different styles for logs. Other features i've done. ");
+      }
+      const selectedOptions = { attack: undefined, defence: [] };
+      function handleRadioClick(clickedRadio) {
+        const radioButtons = document.querySelectorAll(".attackZone input");
+        for (let i = 0; i < radioButtons.length; i++) {
+          if (radioButtons[i].part !== clickedRadio.part) {
+            radioButtons[i].checked = false;
+          }
+        }
+        selectedOptions.attack = clickedRadio.part;
+      }
+      function handleRadioClickDefence(selectedRadio) {
+        const radioButtons = document.querySelectorAll(
+          '.defenceZone input[type="radio"]'
+        );
+
+        selectedOptions.defence = [];
+
+        selectedRadio.checked = true;
+        selectedCount++;
+
+        radioButtons.forEach((radio) => {
+          if (selectedCount > 2 && selectedRadio.part !== radio.part) {
+            radio.checked = false;
+          }
+
+          if (radio.checked) selectedOptions.defence.push(radio.part);
+        });
+
+        if (selectedCount > 2) {
+          selectedCount = 1;
+        }
+      }
+      function mainInfo() {
+        hidePages();
+        const nextPage = document.querySelector(".main-home");
+        nextPage.classList.remove("hide");
+        setItem({ page: ".main-home" });
+      }
+      function displayWins() {
+        const savedWins = getItem("wins");
+        const outPutSect = document.querySelectorAll("#userWins");
+        outPutSect.forEach((elem) => {
+          elem.textContent =
+            savedWins !== undefined
+              ? "Wins: " + savedWins
+              : "Something went wrong";
+        });
+      }
+      function displayLoses() {
+        const savedLoses = getItem("loses");
+        const outPutSect = document.querySelectorAll("#userLoses");
+        outPutSect.forEach((elem) => {
+          elem.textContent =
+            savedLoses !== undefined
+              ? "Loses: " + savedLoses
+              : "Something went wrong";
+        });
+      }
+      function editProfileImages() {
+        const showModal = document.querySelector(".editModalPictures");
+        showModal.classList.remove("hide");
+      }
+      function closeProfileImages() {
+        const closeModal = document.querySelector(".editModalPictures");
+        closeModal.classList.add("hide");
+      }
+      function profileInfo() {
+        hidePages();
+        const nextPage = document.querySelector("#character-page");
+        nextPage.classList.remove("hide");
+        setItem({ page: "#character-page" });
+        displayName();
+        displayWins();
+        displayLoses();
+
+      }
+      function settingsInfo() {
+        hidePages();
+        const nextPage = document.querySelector("#settings-page");
+        nextPage.classList.remove("hide");
+        setItem({ page: "#settings-page" });
+        displayName();
+      }
+      
+      function displayName() {
+        const savedName = getItem("name");
+        const outPutSect = document.querySelectorAll(".userName");
+        outPutSect.forEach((elem) => {
+          elem.textContent = savedName ? savedName : "Something went wrong";
+        });
+
+        const outPutNameInput = document.getElementById(
+          "userNameSettingsInput"
+        );
+        outPutNameInput.value = getItem("name");
+      }
+      function changeButtonEdit(edit = true) {
+        const inputButtonHiden = document.querySelectorAll(".tools");
+        const inputButtonNoHiden = document.querySelectorAll(".changeUserName");
+        const toHide = !edit ? inputButtonHiden : inputButtonNoHiden;
+        const toShow = edit ? inputButtonHiden : inputButtonNoHiden;
+
+        toShow.forEach((tools) => {
+          tools.classList.remove("hide");
+        });
+        toHide.forEach((changeUserName) => {
+          changeUserName.classList.add("hide");
+        });
+      }
+      function changeSaveName() {
+        changeButtonEdit(false);
+        const setItemName = document.getElementById("userNameSettingsInput");
+        const newName = setItemName.value;
+        setItem({ name: newName });
+        displayName();
+      }
+      function selectImg(index) {
+        const mainImgs = document.querySelectorAll(".main-img-char .img");
+        document.querySelectorAll(".imgs-char .img").forEach((img, i) => {
+          img.classList.remove("selected");
+          if (index === i) {
+            img.classList.add("selected");
+            mainImgs.forEach((mI) => {
+              mI.src = img.src;
+            });
+            setItem({ img: index });
+          }
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <section class="sign-up page" id="sign-up">
+      <div class="sign-up-h">
+        <h1 class="main-text">Create your character</h1>
+      </div>
+      <div class="char-inp">
+        <label>Character name</label>
+        <input type="text" id="user-name" />
+      </div>
+      <div class="first-button">
+        <button class="sign-button" onclick="login()">Create character</button>
+      </div>
+    </section>
+    <section class="main-home page" id="main-page">
+      <div class="header-container">
+        <div class="header-name">
+          <span class="title-pg">Main</span>
+        </div>
+        <div class="header-icons">
+          <button class="home-btn" onclick="mainInfo()">
+            <img src="assets/header/house-icon-png-white-32.png" alt="home" />
+          </button>
+          <button class="profile-btn" onclick="profileInfo()">
+            <img
+              src="assets/header/vecteezy_user-profile-icon-profile-avatar-user-icon-male-icon_20911740.png"
+              alt="profile"
+            />
+          </button>
+          <button class="settings-btn" onclick="settingsInfo()">
+            <img
+              src="assets/header/vecteezy_illustration-of-gear-icon_47463967.png"
+            />
+          </button>
+        </div>
+      </div>
+      <div class="fight">
+        <button class="fight-btn" onclick="fight()">Fight!</button>
+      </div>
+    </section>
+    <section class="battle page" id="battle-page">
+      <div class="win-page hide modal">
+        <button
+          class="closeModalbtn closeWinLosBut"
+          onclick="closeModalWinLose()"
+        >
+          <img
+            src="assets/vecteezy_rejected-sign-and-symbol-clip-art_22068723.png"
+          />
+        </button>
+        <div class="winLose-content">
+          <h1>
+            Congratulations!<br />
+            You won this enemy!
+          </h1>
+        </div>
+      </div>
+      <div class="lose-page hide modal">
+        <button
+          class="closeModalbtn closeWinLosBut"
+          onclick="closeModalWinLose()"
+        >
+          <img
+            src="assets/vecteezy_rejected-sign-and-symbol-clip-art_22068723.png"
+          />
+        </button>
+        <div class="winLose-content">
+          <h1>Let's try again!</h1>
+        </div>
+      </div>
+      <div class="header-container">
+        <div class="header-name">
+          <span class="title-pg">Battle</span>
+        </div>
+        <div class="header-icons">
+          <button class="home-btn" onclick="mainInfo()">
+            <img src="assets/header/house-icon-png-white-32.png" alt="home" />
+          </button>
+          <button class="profile-btn" onclick="profileInfo()">
+            <img
+              src="assets/header/vecteezy_user-profile-icon-profile-avatar-user-icon-male-icon_20911740.png"
+              alt="profile"
+            />
+          </button>
+          <button class="settings-btn" onclick="settingsInfo()">
+            <img
+              src="assets/header/vecteezy_illustration-of-gear-icon_47463967.png"
+            />
+          </button>
+        </div>
+      </div>
+      <div class="fightField">
+        <div class="characterField">
+          <span class="userName"> </span>
+          <div class="chosen-img-char main-img-char">
+            <img
+              class="img"
+              src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
+            />
+          </div>
+          <div class="viewCharacter"></div>
+          <div class="healthCharacter">
+            <progress
+              class="HealthCharacterBar"
+              value="100"
+              max="100"
+            ></progress>
+            <p class="amountHelthCharacter">
+              <span id="hp_cur"></span> / <span id="hp_max"></span>
+            </p>
+          </div>
+        </div>
+        <div class="fightZone">
+          <p>Please pick 1 Attack zone and 2 Defence zones</p>
+          <div class="deathZone">
+            <div class="attackZone">
+              <p>Attack Zones</p>
+              <div class="radioContainer">
+                <label for="HeadAttack">Head</label>
+                <input
+                  type="radio"
+                  part="Head"
+                  id="HeadAttack"
+                  onclick="handleRadioClick(this)"
+                />
+              </div>
+              <div class="radioContainer">
+                <label for="NeckAttack">Neck</label>
+                <input
+                  type="radio"
+                  part="Neck"
+                  id="NeckAttack"
+                  onclick="handleRadioClick(this)"
+                />
+              </div>
+              <div class="radioContainer">
+                <label for="BodyAttack">Body</label>
+                <input
+                  type="radio"
+                  part="Body"
+                  id="BodyAttack"
+                  onclick="handleRadioClick(this)"
+                />
+              </div>
+              <div class="radioContainer">
+                <label for="BellyAttack">Belly</label>
+                <input
+                  type="radio"
+                  part="Belly"
+                  id="BellyAttack"
+                  onclick="handleRadioClick(this)"
+                />
+              </div>
+              <div class="radioContainer">
+                <label for="LegsAttack">Legs</label>
+                <input
+                  type="radio"
+                  part="Legs"
+                  id="LegsAttack"
+                  onclick="handleRadioClick(this)"
+                />
+              </div>
+            </div>
+            <div class="lineBetweenZones"></div>
+            <div class="defenceZone">
+              <p>Defence Zones</p>
+              <div class="radioContainerDefence">
+                <input
+                  type="radio"
+                  id="group2Head"
+                  part="Head"
+                  onclick="handleRadioClickDefence(this)"
+                />
+                <label for="group2Head">Head</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input
+                  type="radio"
+                  id="group2Neck"
+                  part="Neck"
+                  onclick="handleRadioClickDefence(this)"
+                />
+                <label for="group2Neck">Neck</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input
+                  type="radio"
+                  id="group2Body"
+                  part="Body"
+                  onclick="handleRadioClickDefence(this)"
+                />
+                <label for="group2Body">Body</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input
+                  type="radio"
+                  id="group2Belly"
+                  part="Belly"
+                  onclick="handleRadioClickDefence(this)"
+                />
+                <label for="group2Belly">Belly</label>
+              </div>
+              <div class="radioContainerDefence">
+                <input
+                  type="radio"
+                  id="group2Legs"
+                  part="Legs"
+                  onclick="handleRadioClickDefence(this)"
+                />
+                <label for="group2Legs">Legs</label>
+              </div>
+            </div>
+          </div>
+          <button class="attackButton" onclick="makeTurn()">Attack!</button>
+        </div>
+        <div class="enemyField">
+          <span id="enemyName">...</span>
+          <div class="viewEnemy">
+            <img src="assets/characters/enemy.png" />
+          </div>
+          <div class="healthEnemy">
+            <progress class="HealthEnemyBar" value="100" max="100"></progress>
+            <p class="amountHelthEnemy">
+              <span id="enemy_hp_cur"></span> / <span id="enemy_hp_max"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="log-container">
+        <div id="log-container"></div>
+      </div>
+    </section>
+    <section class="profile-character page" id="character-page">
+      <div class="editModalPictures modal hide">
+        <div class="modal-content">
+          <div class="imgs-char">
+            <img
+              src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
+              id="1"
+              class="img selected"
+            />
+            <img
+              src="assets/characters/vecteezy_adorable-video-game-character-for-t-shirt-artwork_27294891.png"
+              id="2"
+              class="img"
+            />
+            <img
+              src="assets/characters/vecteezy_cute-game-character-for-t-shirt-design-generative-ai_27294914.png"
+              id="3"
+              class="img"
+            />
+            <img
+              src="assets/characters/vecteezy_engaging-video-game-character-for-t-shirt-design-generative-ai_27294892.png"
+              id="4"
+              class="img"
+            />
+          </div>
+          <button class="closeModalbtn" onclick="closeProfileImages()">
+            <img
+              src="assets/vecteezy_rejected-sign-and-symbol-clip-art_22068723.png"
+            />
+          </button>
+        </div>
+      </div>
+      <div class="header-container">
+        <div class="header-name">
+          <span class="title-pg">Character</span>
+        </div>
+        <div class="header-icons">
+          <button class="home-btn" onclick="mainInfo()">
+            <img src="assets/header/house-icon-png-white-32.png" alt="home" />
+          </button>
+          <button class="profile-btn" onclick="profileInfo()">
+            <img
+              src="assets/header/vecteezy_user-profile-icon-profile-avatar-user-icon-male-icon_20911740.png"
+              alt="profile"
+            />
+          </button>
+          <button class="settings-btn" onclick="settingsInfo()">
+            <img
+              src="assets/header/vecteezy_illustration-of-gear-icon_47463967.png"
+            />
+          </button>
+        </div>
+      </div>
+      <div class="img-char">
+        <div class="main-img-char">
+          <img
+            class="img"
+            src="assets/characters/vecteezy_admired-and-cute-game-character-for-tshirt-print-generative-ai_27294897.png"
+          />
+          <button class="modalscreen" onclick="editProfileImages()">
+            <img
+              src="assets/characters/vecteezy_a-flat-pen-icon-on-a-hexagonal-button-flat_59243648.png"
+            />
+          </button>
+        </div>
+        <div class="charInf">
+          <span class="userName"> </span>
+          <div class="userResults">
+            <span id="userWins"> Wins: 0 </span>
+            <span id="userLoses"> Loses: 0 </span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="settings page" id="settings-page">
+      <div class="header-container">
+        <div class="header-name">
+          <span class="title-pg">Settings</span>
+        </div>
+        <div class="header-icons">
+          <button class="home-btn" onclick="mainInfo()">
+            <img src="assets/header/house-icon-png-white-32.png" alt="home" />
+          </button>
+          <button class="profile-btn" onclick="profileInfo()">
+            <img
+              src="assets/header/vecteezy_user-profile-icon-profile-avatar-user-icon-male-icon_20911740.png"
+              alt="profile"
+            />
+          </button>
+          <button class="settings-btn" onclick="settingsInfo()">
+            <img
+              src="assets/header/vecteezy_illustration-of-gear-icon_47463967.png"
+            />
+          </button>
+        </div>
+      </div>
+      <div class="cont-settings">
+        <span id="PlayerName">Player name: </span>
+        <span id="userNameSettings" class="changeUserName userName"> </span>
+        <input type="text" id="userNameSettingsInput" class="tools hide" />
+        <button class="changeUserName" onclick="changeButtonEdit()">
+          Edit
+        </button>
+        <button class="tools save-button hide" onclick="changeSaveName()">
+          Save
+        </button>
+      </div>
+    </section>
+    <script>
+      hidePages();
+      document.addEventListener("DOMContentLoaded", () => {
+        displayName();
+        displayWins();
+        displayLoses();
+
+        const nededPage = (() => {
+          if (!getItem("name")) {
+            return "#sign-up";
+          }
+          const savedPage = getItem("page");
+          if (savedPage) {
+            if (savedPage === "#battle-page") {
+              fight();
+            }
+            return savedPage;
+          }
+          if (getItem("enemyID") !== undefined) {
+            fight();
+            return "#battle-page";
+          }
+          return "#main-page";
+        })();
+        const nextPage = document.querySelector(nededPage);
+        nextPage.classList.remove("hide");
+        setItem({ page: nededPage });
+
+        document.querySelectorAll(".imgs-char img").forEach((img, index) => {
+          img.addEventListener("click", () => {
+            selectImg(index);
+          });
+        });
+        const savedImg = getItem("img") || 0;
+        selectImg(savedImg);
+      });
+    </script>
+  </body>
+</html>
