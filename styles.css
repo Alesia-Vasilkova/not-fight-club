@@ -113,7 +113,7 @@ section {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: 90vh;
   margin: 0;
 }
 .fight-btn {
@@ -185,5 +185,24 @@ section {
   justify-content: right;
 }
 .attackButton {
-    cursor: pointer;
+  cursor: pointer;
+}
+.win-page,
+.lose-page {
+  background-color: rgb(185, 194, 191);
+  width: 400px;
+  height: 200px;
+  border: 1px solid #000;
+  border-radius: 0.3rem;
+  left: 508px;
+  top: 168px;
+}
+.winLose-content {
+  display: flex;
+  align-items: center;
+}
+.closeWinLosBut,
+.closeWinLosBut button {
+  display: flex;
+  right: 0 !important;
 }

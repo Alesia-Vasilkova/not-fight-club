@@ -64,6 +64,21 @@
         }
         return resAttack;
       }
+      function renderLogs(array, isClear = false) {
+        const logContainer = document.getElementById("log-container");
+        if (isClear) {
+          setItem({ logs: [] });
+          logContainer.innerHTML = "";
+        }
+
+        array.forEach((log) => {
+          const logElement = document.createElement("p");
+          const newContent = document.createTextNode(log);
+
+          logElement.appendChild(newContent);
+          logContainer.appendChild(logElement);
+        });
+      }
       function defence(toDefence, enemy) {
         const attacks = enemy.attack;
         const zones = getZones(attacks);
@@ -86,7 +101,22 @@
         const prev = getItem("hpEnem");
         setItem({ hpEnem: prev - 10 });
       }
+      function closeModalWinLose() {
+        profileInfo();
+        const modalWins = document.querySelector(".win-page");
+        const modalLoses = document.querySelector(".lose-page");
+        modalWins.classList.add("hide");
+        modalLoses.classList.add("hide");
+        const buttonAttack = document.querySelector(".attackButton");
+        buttonAttack.disabled = false;
+      }
       function makeTurn() {
+        if (
+          selectedOptions.attack === undefined ||
+          !selectedOptions.defence.length
+        ) {
+          return;
+        }
         const enemID = getItem("enemyID");
         const attackRes = attack(selectedOptions.attack, enemies[enemID]);
         const successfullAttack = Object.keys(attackRes).some(
@@ -98,24 +128,27 @@
           (key) => !defendRes[key]
         );
         const missed = Object.keys(defendRes).filter((key) => defendRes[key]);
-        const logsTerritory = document.querySelector(".log-container");
         const savedNameCharacter = getItem("name");
         const savedNameEnemy = enemies[enemID].name;
 
         const logArray = [];
         if (successfullAttack) {
-          logArray.push(`We successfully attacked ${selectedOptions.attack}`);
+          logArray.push(
+            `${savedNameCharacter} successfully attacked ${savedNameEnemy} to ${selectedOptions.attack}`
+          );
           damage();
         } else {
           logArray.push(
-            `We missed attacked ${selectedOptions.attack} because enemy defended ${selectedOptions.attack}`
+            `${savedNameCharacter} missed attacked ${selectedOptions.attack} because ${savedNameEnemy} defended ${selectedOptions.attack}`
           );
         }
 
         if (getItem("hpEnem") > 0) {
           defended.forEach((zone) => {
             logArray.push(
-              `Enemy attacked ${bodyParts[zone.toString()]} but we defended ${
+              `${savedNameEnemy} attacked ${
+                bodyParts[zone.toString()]
+              } but ${savedNameCharacter} defended ${
                 bodyParts[zone.toString()]
               }`
             );
@@ -123,7 +156,7 @@
           missed.forEach((zone) => {
             damage(true);
             logArray.push(
-              `Enemy successfully attacked ${bodyParts[zone.toString()]}`
+              `${savedNameEnemy} attacked ${bodyParts[zone.toString()]}`
             );
           });
         }
@@ -131,28 +164,45 @@
         renderHP(enemID);
 
         let finished = false;
+
+        const loses = getItem("loses");
+        const modalWins = document.querySelector(".win-page");
+        const modalLoses = document.querySelector(".lose-page");
+        const buttonAttack = document.querySelector(".attackButton");
+        buttonAttack.disabled = false;
+
         if (getItem("hpEnem") <= 0) {
           logArray.push(`We win`);
+          modalWins.classList.remove("hide");
           finished = true;
+          setItem({ wins: getItem("wins") + 1 });
+          buttonAttack.disabled = true;
         }
 
         if (getItem("hp") <= 0) {
           logArray.push(`We lose`);
+          modalLoses.classList.remove("hide");
           finished = true;
+          setItem({ loses: getItem("loses") + 1 });
+          buttonAttack.disabled = true;
         }
 
-        const logContainer = document.querySelector(".log-container");
-        logArray.forEach((log) => {
-          const logElement = document.createElement("p");
-          const newContent = document.createTextNode(log);
-
-          logElement.appendChild(newContent);
-          logContainer.appendChild(logElement);
-        });
+        renderLogs(logArray);
+        const oldLogs = getItem("logs") || [];
+        oldLogs.push(...logArray);
+        setItem({ logs: oldLogs });
 
         selectedCount = 0;
         if (finished) {
           setItem({ enemyID: undefined });
+          const radioButtons = document.querySelectorAll(
+            '#battle-page input[type="radio"]'
+          );
+          radioButtons.forEach((input) => {
+            input.checked = false;
+          });
+          selectedOptions.attack = undefined;
+          selectedOptions.defence = [];
           fight();
         }
       }
@@ -181,10 +231,11 @@
         if (val === "") {
           return;
         }
-        setItem({ name: val });
+        setItem({ name: val, wins: 0, loses: 0 });
         hidePages();
         const nextPage = document.querySelector(".main-home");
         nextPage.classList.remove("hide");
+        setItem({ page: ".main-home" });
       }
       function setEnemy(enemID) {
         const enemyImg = document.querySelector(".viewEnemy img");
@@ -216,9 +267,12 @@
         hidePages();
         const nextPage = document.querySelector("#battle-page");
         nextPage.classList.remove("hide");
+        setItem({ page: "#battle-page" });
         const showImageFromStorage =
           document.querySelectorAll(".chosen-img-char");
         showImageFromStorage.value = getItem("img");
+
+        displayName();
 
         const enemyName = document.querySelector("#enemyName");
 
@@ -228,10 +282,17 @@
         const enemIDNew = enemID ?? getRandomEnemy();
         setEnemy(enemIDNew);
         if (enemID === undefined || hpEnem <= 0 || hp <= 0) {
+          renderLogs([], true);
           setItem({ hp: 150, hpEnem: enemies[enemIDNew].hpEnem });
         }
 
+        if (enemID !== undefined) {
+          const logs = getItem("logs");
+          renderLogs(logs);
+        }
+
         renderHP(enemIDNew);
+        console.log("I have 2 enemies: Crab and Gorilla. I don't have critical mechanic and different styles for logs. Other features i've done. ");
       }
       const selectedOptions = { attack: undefined, defence: [] };
       function handleRadioClick(clickedRadio) {
@@ -269,48 +330,64 @@
         hidePages();
         const nextPage = document.querySelector(".main-home");
         nextPage.classList.remove("hide");
+        setItem({ page: ".main-home" });
+      }
+      function displayWins() {
+        const savedWins = getItem("wins");
+        const outPutSect = document.querySelectorAll("#userWins");
+        outPutSect.forEach((elem) => {
+          elem.textContent =
+            savedWins !== undefined
+              ? "Wins: " + savedWins
+              : "Something went wrong";
+        });
+      }
+      function displayLoses() {
+        const savedLoses = getItem("loses");
+        const outPutSect = document.querySelectorAll("#userLoses");
+        outPutSect.forEach((elem) => {
+          elem.textContent =
+            savedLoses !== undefined
+              ? "Loses: " + savedLoses
+              : "Something went wrong";
+        });
+      }
+      function editProfileImages() {
+        const showModal = document.querySelector(".editModalPictures");
+        showModal.classList.remove("hide");
+      }
+      function closeProfileImages() {
+        const closeModal = document.querySelector(".editModalPictures");
+        closeModal.classList.add("hide");
       }
       function profileInfo() {
         hidePages();
         const nextPage = document.querySelector("#character-page");
         nextPage.classList.remove("hide");
+        setItem({ page: "#character-page" });
         displayName();
+        displayWins();
+        displayLoses();
+
       }
       function settingsInfo() {
         hidePages();
         const nextPage = document.querySelector("#settings-page");
         nextPage.classList.remove("hide");
-        displayNameSettings();
+        setItem({ page: "#settings-page" });
+        displayName();
       }
-      function editProfileImages() {
-        const showModal = document.querySelector(".modal");
-        showModal.classList.remove("hide");
-      }
-      function closeProfileImages() {
-        const closeModal = document.querySelector(".modal");
-        closeModal.classList.add("hide");
-      }
+      
       function displayName() {
         const savedName = getItem("name");
-        const outPutSect = document.querySelectorAll("#userName");
+        const outPutSect = document.querySelectorAll(".userName");
         outPutSect.forEach((elem) => {
           elem.textContent = savedName ? savedName : "Something went wrong";
         });
-      }
-      function displayNameBattle() {
-        const savedNameBattle = getItem("name");
-        const outPutName = document.getElementById("userNameBattle");
-        outPutName.textContent = savedNameBattle
-          ? savedNameBattle
-          : "Something went wrong";
-      }
-      function displayNameSettings() {
-        const savedName = getItem("name");
-        const outPutSect = document.getElementById("userNameSettings");
+
         const outPutNameInput = document.getElementById(
           "userNameSettingsInput"
         );
-        outPutSect.textContent = savedName ? savedName : "Something went wrong";
         outPutNameInput.value = getItem("name");
       }
       function changeButtonEdit(edit = true) {
@@ -332,7 +409,6 @@
         const newName = setItemName.value;
         setItem({ name: newName });
         displayName();
-        displayNameSettings();
       }
       function selectImg(index) {
         const mainImgs = document.querySelectorAll(".main-img-char .img");
@@ -389,6 +465,35 @@
       </div>
     </section>
     <section class="battle page" id="battle-page">
+      <div class="win-page hide modal">
+        <button
+          class="closeModalbtn closeWinLosBut"
+          onclick="closeModalWinLose()"
+        >
+          <img
+            src="assets/vecteezy_rejected-sign-and-symbol-clip-art_22068723.png"
+          />
+        </button>
+        <div class="winLose-content">
+          <h1>
+            Congratulations!<br />
+            You won this enemy!
+          </h1>
+        </div>
+      </div>
+      <div class="lose-page hide modal">
+        <button
+          class="closeModalbtn closeWinLosBut"
+          onclick="closeModalWinLose()"
+        >
+          <img
+            src="assets/vecteezy_rejected-sign-and-symbol-clip-art_22068723.png"
+          />
+        </button>
+        <div class="winLose-content">
+          <h1>Let's try again!</h1>
+        </div>
+      </div>
       <div class="header-container">
         <div class="header-name">
           <span class="title-pg">Battle</span>
@@ -412,7 +517,7 @@
       </div>
       <div class="fightField">
         <div class="characterField">
-          <span id="userName"> </span>
+          <span class="userName"> </span>
           <div class="chosen-img-char main-img-char">
             <img
               class="img"
@@ -547,10 +652,12 @@
           </div>
         </div>
       </div>
-      <div class="log-container">logs</div>
+      <div class="log-container">
+        <div id="log-container"></div>
+      </div>
     </section>
     <section class="profile-character page" id="character-page">
-      <div class="modal hide">
+      <div class="editModalPictures modal hide">
         <div class="modal-content">
           <div class="imgs-char">
             <img
@@ -615,7 +722,7 @@
           </button>
         </div>
         <div class="charInf">
-          <span id="userName"> </span>
+          <span class="userName"> </span>
           <div class="userResults">
             <span id="userWins"> Wins: 0 </span>
             <span id="userLoses"> Loses: 0 </span>
@@ -647,7 +754,7 @@
       </div>
       <div class="cont-settings">
         <span id="PlayerName">Player name: </span>
-        <span id="userNameSettings" class="changeUserName"> </span>
+        <span id="userNameSettings" class="changeUserName userName"> </span>
         <input type="text" id="userNameSettingsInput" class="tools hide" />
         <button class="changeUserName" onclick="changeButtonEdit()">
           Edit
@@ -659,22 +766,32 @@
     </section>
     <script>
       hidePages();
-      displayName();
-
-      const nededPage = (() => {
-        if (!getItem("name")) {
-          return "#sign-up";
-        }
-        if (getItem("enemyID") !== undefined) {
-          fight();
-          return "#battle-page";
-        }
-        return "#main-page";
-      })();
-      const nextPage = document.querySelector(nededPage);
-      nextPage.classList.remove("hide");
-
       document.addEventListener("DOMContentLoaded", () => {
+        displayName();
+        displayWins();
+        displayLoses();
+
+        const nededPage = (() => {
+          if (!getItem("name")) {
+            return "#sign-up";
+          }
+          const savedPage = getItem("page");
+          if (savedPage) {
+            if (savedPage === "#battle-page") {
+              fight();
+            }
+            return savedPage;
+          }
+          if (getItem("enemyID") !== undefined) {
+            fight();
+            return "#battle-page";
+          }
+          return "#main-page";
+        })();
+        const nextPage = document.querySelector(nededPage);
+        nextPage.classList.remove("hide");
+        setItem({ page: nededPage });
+
         document.querySelectorAll(".imgs-char img").forEach((img, index) => {
           img.addEventListener("click", () => {
             selectImg(index);
