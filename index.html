@@ -302,7 +302,7 @@
             radioButtons[i].checked = false;
           }
         }
-        selectedOptions.attack = clickedRadio.part;
+        selectedOptions.attack = clickedRadio.part.toString();
       }
       function handleRadioClickDefence(selectedRadio) {
         const radioButtons = document.querySelectorAll(
@@ -319,7 +319,7 @@
             radio.checked = false;
           }
 
-          if (radio.checked) selectedOptions.defence.push(radio.part);
+          if (radio.checked) selectedOptions.defence.push(radio.part.toString());
         });
 
         if (selectedCount > 2) {
