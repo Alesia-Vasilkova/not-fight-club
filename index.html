@@ -146,7 +146,7 @@
         if (getItem("hpEnem") > 0) {
           defended.forEach((zone) => {
             logArray.push(
-              `${savedNameEnemy} attacked ${
+              `${savedNameEnemy} attacked ${savedNameCharacter} to ${
                 bodyParts[zone.toString()]
               } but ${savedNameCharacter} defended ${
                 bodyParts[zone.toString()]
@@ -156,7 +156,7 @@
           missed.forEach((zone) => {
             damage(true);
             logArray.push(
-              `${savedNameEnemy} attacked ${bodyParts[zone.toString()]} 10 damage`
+              `${savedNameEnemy} attacked ${savedNameCharacter} to ${bodyParts[zone.toString()]} 10 damage`
             );
           });
         }
