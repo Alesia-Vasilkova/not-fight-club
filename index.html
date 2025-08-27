@@ -134,12 +134,12 @@
         const logArray = [];
         if (successfullAttack) {
           logArray.push(
-            `${savedNameCharacter} successfully attacked ${savedNameEnemy} to ${selectedOptions.attack}`
+            `${savedNameCharacter} successfully attacked ${savedNameEnemy} to ${selectedOptions.attack} 10 damage`
           );
           damage();
         } else {
           logArray.push(
-            `${savedNameCharacter} missed attacked ${selectedOptions.attack} because ${savedNameEnemy} defended ${selectedOptions.attack}`
+            `${savedNameCharacter} missed attacked ${selectedOptions.attack} because ${savedNameEnemy} defended ${selectedOptions.attack} 0 damage`
           );
         }
 
@@ -150,13 +150,13 @@
                 bodyParts[zone.toString()]
               } but ${savedNameCharacter} defended ${
                 bodyParts[zone.toString()]
-              }`
+              } 0 damage`
             );
           });
           missed.forEach((zone) => {
             damage(true);
             logArray.push(
-              `${savedNameEnemy} attacked ${bodyParts[zone.toString()]}`
+              `${savedNameEnemy} attacked ${bodyParts[zone.toString()]} 10 damage`
             );
           });
         }
