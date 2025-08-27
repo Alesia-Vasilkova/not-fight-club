@@ -113,7 +113,7 @@
       function makeTurn() {
         if (
           selectedOptions.attack === undefined ||
-          !selectedOptions.defence.length
+          selectedOptions.defence.length < 2
         ) {
           return;
         }
